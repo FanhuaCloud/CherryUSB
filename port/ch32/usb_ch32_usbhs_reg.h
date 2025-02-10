@@ -217,10 +217,11 @@ typedef struct __attribute__((packed)) {
     __IO uint16_t HOST_SPLIT_DATA;
 } USBHSH_TypeDef;
 
-#define USBHS_BASE ((uint32_t)(0x40000000 + 0x23400))
+// #define USBHS_BASE ((uint32_t)(0x40000000 + 0x23400))
+#define USBD_BASE (g_usbdev_bus[busid].reg_base)
 
-#define USBHS_DEVICE ((USBHSD_TypeDef *)USBHS_BASE)
-#define USBHS_HOST   ((USBHSH_TypeDef *)USBHS_BASE)
+#define USBHS_DEVICE ((USBHSD_TypeDef *)USBD_BASE)
+#define USBHS_HOST   ((USBHSH_TypeDef *)USBD_BASE)
 
 /******************* GLOBAL ******************/
 

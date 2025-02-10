@@ -6,14 +6,6 @@
 #include "usbd_core.h"
 #include "usb_ch32_usbhs_reg.h"
 
-#ifndef USBD_IRQHandler
-#define USBD_IRQHandler USBHS_IRQHandler //use actual usb irq name instead
-#endif
-
-#ifndef USB_NUM_BIDIR_ENDPOINTS
-#define USB_NUM_BIDIR_ENDPOINTS 16
-#endif
-
 #define USB_SET_RX_DMA(ep_idx, addr) (*(volatile uint32_t *)((uint32_t)(&USBHS_DEVICE->UEP1_RX_DMA) + 4 * (ep_idx - 1)) = addr)
 #define USB_SET_TX_DMA(ep_idx, addr) (*(volatile uint32_t *)((uint32_t)(&USBHS_DEVICE->UEP1_TX_DMA) + 4 * (ep_idx - 1)) = addr)
 #define USB_SET_MAX_LEN(ep_idx, len) (*(volatile uint16_t *)((uint32_t)(&USBHS_DEVICE->UEP0_MAX_LEN) + 4 * ep_idx) = len)
@@ -39,16 +31,14 @@ struct ch32_usbhs_ep_state {
 struct ch32_usbhs_udc {
     __attribute__((aligned(4))) struct usb_setup_packet setup;
     volatile uint8_t dev_addr;
-    struct ch32_usbhs_ep_state in_ep[USB_NUM_BIDIR_ENDPOINTS];  /*!< IN endpoint parameters*/
-    struct ch32_usbhs_ep_state out_ep[USB_NUM_BIDIR_ENDPOINTS]; /*!< OUT endpoint parameters */
+    struct ch32_usbhs_ep_state in_ep[CONFIG_USBDEV_EP_NUM];  /*!< IN endpoint parameters*/
+    struct ch32_usbhs_ep_state out_ep[CONFIG_USBDEV_EP_NUM]; /*!< OUT endpoint parameters */
 } g_ch32_usbhs_udc;
-
-void USBHS_IRQHandler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 
 volatile uint8_t mps_over_flag = 0;
 volatile bool ep0_rx_data_toggle;
 volatile bool ep0_tx_data_toggle;
-volatile bool epx_tx_data_toggle[USB_NUM_BIDIR_ENDPOINTS - 1];
+volatile bool epx_tx_data_toggle[CONFIG_USBDEV_EP_NUM - 1];
 
 __WEAK void usb_dc_low_level_init(void)
 {
@@ -255,7 +245,7 @@ int usbd_ep_start_read(uint8_t busid, const uint8_t ep, uint8_t *data, uint32_t 
     return 0;
 }
 
-void USBD_IRQHandler(void)
+void USBD_IRQHandler(uint8_t busid)
 {
     uint32_t ep_idx, token, write_count, read_count;
     uint8_t intflag = 0;
@@ -371,7 +361,7 @@ void USBD_IRQHandler(void)
         ep0_tx_data_toggle = true;
         ep0_rx_data_toggle = true;
 
-        for (uint8_t ep_idx = 1; ep_idx < USB_NUM_BIDIR_ENDPOINTS; ep_idx++) {
+        for (uint8_t ep_idx = 1; ep_idx < CONFIG_USBDEV_EP_NUM; ep_idx++) {
             USB_SET_TX_LEN(ep_idx, 0);
             USB_SET_TX_CTRL(ep_idx, USBHS_EP_T_AUTOTOG | USBHS_EP_T_RES_NAK); // autotog does not work
             USB_SET_RX_CTRL(ep_idx, USBHS_EP_R_AUTOTOG | USBHS_EP_R_RES_NAK);
