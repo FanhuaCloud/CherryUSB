@@ -72,7 +72,7 @@ int usb_dc_init(uint8_t busid)
 
     USBHS_DEVICE->INT_FG = 0xff;
     USBHS_DEVICE->INT_EN = 0;
-    USBHS_DEVICE->INT_EN = USBHS_SETUP_ACT_EN | USBHS_TRANSFER_EN | USBHS_DETECT_EN;
+    USBHS_DEVICE->INT_EN = USBHS_SETUP_ACT_EN | USBHS_TRANSFER_EN | USBHS_BUS_RST_EN;
 
     USBHS_DEVICE->ENDP_TYPE = 0x00;
     USBHS_DEVICE->BUF_MODE = 0x00;
@@ -376,7 +376,7 @@ void USBD_IRQHandler(uint8_t busid)
         USBHS_DEVICE->INT_FG = USBHS_SETUP_FLAG;
     }
 
-    if (intflag & USBHS_DETECT_FLAG) {
+    if (intflag & USBHS_BUS_RST_FLAG) {
         USBHS_DEVICE->ENDP_CONFIG = USBHS_EP0_T_EN | USBHS_EP0_R_EN;
 
         USBHS_DEVICE->UEP0_TX_LEN = 0;
@@ -393,7 +393,7 @@ void USBD_IRQHandler(uint8_t busid)
         USBHS_DEVICE->UEP0_DMA = (uint32_t)&g_ch32_usbhs_udc.setup;
         USBHS_DEVICE->UEP0_RX_CTRL = USBHS_EP_R_RES_ACK;
 
-        USBHS_DEVICE->INT_FG = USBHS_DETECT_FLAG;
+        USBHS_DEVICE->INT_FG = USBHS_BUS_RST_FLAG;
     }
 }
 
