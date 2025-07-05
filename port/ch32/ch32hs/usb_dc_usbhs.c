@@ -103,7 +103,22 @@ int usbd_set_remote_wakeup(uint8_t busid)
 
 uint8_t usbd_get_port_speed(uint8_t busid)
 {
-    return USB_SPEED_HIGH;
+    switch (USBHS_DEVICE->CONTROL & USBHS_SPEED_MASK) {
+        case USBHS_FULL_SPEED:
+            return USB_SPEED_FULL;
+            break;
+        case USBHS_HIGH_SPEED:
+            return USB_SPEED_HIGH;
+            break;
+        case USBHS_LOW_SPEED:
+            return USB_SPEED_LOW;
+            break;
+        default:
+            return USB_SPEED_UNKNOWN;
+            break;
+    }
+
+    return USB_SPEED_UNKNOWN;
 }
 
 int usbd_ep_open(uint8_t busid, const struct usb_endpoint_descriptor *ep)
