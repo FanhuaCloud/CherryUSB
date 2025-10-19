@@ -70,6 +70,9 @@ if GetDepend(['PKG_CHERRYUSB_DEVICE']):
     if GetDepend(['PKG_CHERRYUSB_DEVICE_MUSB_BK']):
         src += Glob('port/musb/usb_dc_musb.c')
         src += Glob('port/musb/usb_glue_bk.c')
+    if GetDepend(['PKG_CHERRYUSB_DEVICE_MUSB_SIFLI']):
+        src += Glob('port/musb/usb_dc_musb.c')
+        src += Glob('port/musb/usb_glue_sifli.c')
     if GetDepend(['PKG_CHERRYUSB_DEVICE_MUSB_CUSTOM']):
         src += Glob('port/musb/usb_dc_musb.c')
     if GetDepend(['PKG_CHERRYUSB_DEVICE_CHIPIDEA_MCX']):
@@ -87,6 +90,7 @@ if GetDepend(['PKG_CHERRYUSB_DEVICE']):
     if GetDepend(['PKG_CHERRYUSB_DEVICE_BL']):
         src += Glob('port/bouffalolab/usb_dc_bl.c')
     if GetDepend(['PKG_CHERRYUSB_DEVICE_HPM']):
+        path += [cwd + '/port/hpmicro']
         src += Glob('port/hpmicro/usb_dc_hpm.c')
         src += Glob('port/hpmicro/usb_glue_hpm.c')
     if GetDepend(['PKG_CHERRYUSB_DEVICE_AIC']):
@@ -181,6 +185,7 @@ if GetDepend(['PKG_CHERRYUSB_HOST']):
         src += Glob('port/ehci/usb_hc_ehci.c')
         src += Glob('port/ehci/usb_glue_bouffalo.c')
     if GetDepend(['PKG_CHERRYUSB_HOST_EHCI_HPM']):
+        path += [cwd + '/port/hpmicro']
         src += Glob('port/ehci/usb_hc_ehci.c')
         src += Glob('port/hpmicro/usb_hc_hpm.c')
         src += Glob('port/hpmicro/usb_glue_hpm.c')
@@ -230,6 +235,9 @@ if GetDepend(['PKG_CHERRYUSB_HOST']):
     if GetDepend(['PKG_CHERRYUSB_HOST_MUSB_BK']):
         src += Glob('port/musb/usb_hc_musb.c')
         src += Glob('port/musb/usb_glue_bk.c')
+    if GetDepend(['PKG_CHERRYUSB_HOST_MUSB_SIFLI']):
+        src += Glob('port/musb/usb_hc_musb.c')
+        src += Glob('port/musb/usb_glue_sifli.c')
     if GetDepend(['PKG_CHERRYUSB_HOST_MUSB_CUSTOM']):
         src += Glob('port/musb/usb_hc_musb.c')
     if GetDepend(['PKG_CHERRYUSB_HOST_KINETIS_MCX']):
@@ -289,8 +297,7 @@ if GetDepend(['PKG_CHERRYUSB_HOST']):
     if GetDepend(['PKG_CHERRYUSB_HOST_PL2303']):
         src += Glob('class/vendor/serial/usbh_pl2303.c')
 
-    if GetDepend(['PKG_CHERRYUSB_HOST_TEMPLATE']):
-        CPPDEFINES+=['TEST_USBH_MSC=0']
+    if GetDepend(['CONFIG_TEST_USBH_HID']):
         src += Glob('demo/usb_host.c')
 
     if GetDepend(['PKG_CHERRYUSB_HOST_CDC_ACM'])    \

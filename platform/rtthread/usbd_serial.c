@@ -76,9 +76,8 @@ static rt_err_t usbd_serial_open(struct rt_device *dev, rt_uint16_t oflag)
 
     serial = (struct usbd_serial *)dev;
 
-    if (!usb_device_is_configured(serial->busid)) {
-        USB_LOG_ERR("USB device is not configured\n");
-        return -RT_EPERM;
+    while(!usb_device_is_configured(serial->busid)) {
+        rt_thread_mdelay(10);
     }
 
     usbd_ep_start_read(serial->busid, serial->out_ep,
@@ -123,9 +122,8 @@ static rt_ssize_t usbd_serial_write(struct rt_device *dev,
     }
     align_buf = (rt_uint8_t *)buffer;
 
-#ifdef RT_USING_CACHE
     if ((uint32_t)buffer & (CONFIG_USB_ALIGN_SIZE - 1)) {
-        align_buf = rt_malloc_align(size, CONFIG_USB_ALIGN_SIZE);
+        align_buf = rt_malloc_align(USB_ALIGN_UP(size, CONFIG_USB_ALIGN_SIZE), CONFIG_USB_ALIGN_SIZE);
         if (!align_buf) {
             USB_LOG_ERR("serial get align buf failed\n");
             return 0;
@@ -133,7 +131,7 @@ static rt_ssize_t usbd_serial_write(struct rt_device *dev,
 
         usb_memcpy(align_buf, buffer, size);
     }
-#endif
+
     usb_osal_sem_reset(serial->tx_done);
     usbd_ep_start_write(serial->busid, serial->in_ep, align_buf, size);
     ret = usb_osal_sem_take(serial->tx_done, 3000);
@@ -144,11 +142,9 @@ static rt_ssize_t usbd_serial_write(struct rt_device *dev,
         ret = size;
     }
 
-#ifdef CONFIG_USB_DCACHE_ENABLE
     if ((uint32_t)buffer & (CONFIG_USB_ALIGN_SIZE - 1)) {
         rt_free_align(align_buf);
     }
-#endif
 
     return ret;
 }
@@ -190,7 +186,7 @@ rt_err_t usbd_serial_register(struct usbd_serial *serial,
     device->user_data = data;
 
     /* register a character device */
-    ret = rt_device_register(device, serial->name, RT_DEVICE_FLAG_RDWR | RT_DEVICE_FLAG_REMOVABLE);
+    ret = rt_device_register(device, serial->name, RT_DEVICE_FLAG_RDWR | RT_DEVICE_FLAG_INT_RX | RT_DEVICE_FLAG_REMOVABLE);
 
 #ifdef RT_USING_POSIX_DEVIO
     /* set fops */
@@ -209,6 +205,13 @@ void usbd_cdc_acm_bulk_out(uint8_t busid, uint8_t ep, uint32_t nbytes)
         serial = &g_usbd_serial_cdc_acm[devno];
         if (serial->out_ep == ep) {
             rt_ringbuffer_put(&serial->rx_rb, g_usbd_serial_cdc_acm_rx_buf[serial->minor], nbytes);
+            usbd_ep_start_read(serial->busid, serial->out_ep,
+                g_usbd_serial_cdc_acm_rx_buf[serial->minor],
+                usbd_get_ep_mps(serial->busid, serial->out_ep));
+
+            if (serial->parent.rx_indicate) {
+                serial->parent.rx_indicate(&serial->parent, nbytes);
+            }
             break;
         }
     }
