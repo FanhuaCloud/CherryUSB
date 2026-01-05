@@ -112,7 +112,8 @@ CherryUSB Host Stack has the following functions:
 - Support USB Audio CLASS (UAC1.0)
 - Support Remote NDIS (RNDIS)
 - Support USB Bluetooth class (support nimble and zephyr bluetooth stack, support **CLASS:0xE0** or vendor class like cdc acm)
-- Support Vendor class (serial, net, wifi)
+- Support Vendor Serial Class(CH34X、CP210X、PL2303、FTDI、GSM)
+- Support Vendor network Class(RTL8152、AX88772)
 - Support USB modeswitch
 - Support Android Open Accessory
 - Support multi host with the same USB IP
@@ -150,7 +151,7 @@ Among them, `sizeof(struct usbh_hub)` and `sizeof(struct usbh_hubport)` are affe
 x is affected by the following macros:
 
 ```
-#define CONFIG_USBHOST_MAX_CDC_ACM_CLASS 4
+#define CONFIG_USBHOST_MAX_SERIAL_CLASS  4
 #define CONFIG_USBHOST_MAX_HID_CLASS     4
 #define CONFIG_USBHOST_MAX_MSC_CLASS     2
 #define CONFIG_USBHOST_MAX_AUDIO_CLASS   1
@@ -181,11 +182,11 @@ Quickly start, USB basic concepts, API manual, Class basic concepts and examples
 
 ## Video Tutorial
 
-CherryUSB Cheese (based V1.4.3): https://www.bilibili.com/cheese/play/ss707687201 .
+CherryUSB Cheese (>= V1.4.3): https://www.bilibili.com/cheese/play/ss707687201 .
 
 ## Descriptor Generator Tool
 
-TODO
+Cherry Descriptor: https://desc.cherry-embedded.org/en
 
 ## Demo Repo
 
@@ -197,7 +198,7 @@ TODO
 |Essemi         |  ES32F36xx | musb |[es32f369_repo](https://github.com/CherryUSB/cherryusb_es32)|<= latest | Official |
 |Phytium        |  e2000 | pusb2/xhci |[phytium_repo](https://gitee.com/phytium_embedded/phytium-free-rtos-sdk)|>=1.4.0  | Official |
 |Artinchip      |  d12x/d13x/d21x | aic/ehci/ohci |[luban-lite](https://gitee.com/artinchip/luban-lite)|<= latest  | Official |
-|Espressif      |  esp32s2/esp32s3/esp32p4 | dwc2 |[esp32_repo](https://github.com/CherryUSB/cherryusb_esp32)|<= latest | Official ongoing |
+|Espressif      |  esp32s2/esp32s3/esp32p4 | dwc2 |[esp32_repo](https://github.com/CherryUSB/cherryusb_esp32)/[espressif](https://github.com/espressif/esp-idf/tree/master/examples/peripherals/usb)|<= latest | Official |
 |Kendryte       |  k230 | dwc2 |[k230_repo](https://github.com/CherryUSB/k230_sdk)|v1.2.0 | Official |
 |Actionstech    |  ATS30xx | dwc2 |[action_zephyr_repo](https://github.com/CherryUSB/lv_port_actions_technology/tree/master/action_technology_sdk)|>=1.4.0 | Official |
 |SiFli          |  SF32LB5x | musb |[SiFli_sdk](https://github.com/OpenSiFli/SiFli-SDK)|>=1.5.0 | Official |
