@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
 
-include(proj.conf)
-
 find_package(bouffalo_sdk REQUIRED HINTS $ENV{BL_SDK_BASE})
 
 sdk_add_compile_definitions(-DCONFIG_USBHOST_PLATFORM_CDC_ECM)
@@ -31,6 +29,7 @@ add_subdirectory(../.. cherryusb)
 # sdk_add_link_options(-uusbd_audio_init_intf)
 # sdk_add_link_options(-uusbd_cdc_ecm_init_intf)
 # sdk_add_link_options(-uusbd_rndis_init_intf)
+# sdk_add_link_options(-uusbd_dfu_init_intf)
 # sdk_add_link_options(-uusbd_initialize)
 # sdk_add_link_options(-uusbd_desc_register)
 # sdk_add_link_options(-uusbd_add_interface)

@@ -7,19 +7,17 @@
 #include "usbd_hid.h"
 #include "usbd_gamepad.h"
 
-extern int hid_class_interface_request_handler(uint8_t busid, struct usb_setup_packet *setup, uint8_t **data, uint32_t *len);
-
 USB_NOCACHE_RAM_SECTION USB_MEM_ALIGNX uint8_t gamepad_report_buffer[64];
 
 static int xinput_vendor_class_request_handler(uint8_t busid, struct usb_setup_packet *setup, uint8_t **data, uint32_t *len)
 {
     struct xinput_in_report xinput_report;
 
-    memset(&xinput_report, 0, sizeof(xinput_report));
+    memset(&xinput_report, 0, sizeof(struct xinput_in_report));
     xinput_report.report_size = 20;
 
-    memcpy(*data, &xinput_report, sizeof(xinput_report));
-    *len = sizeof(xinput_report);
+    memcpy(*data, &xinput_report, sizeof(struct xinput_in_report));
+    *len = sizeof(struct xinput_in_report);
     return 0;
 }
 
@@ -28,7 +26,7 @@ int usbd_gamepad_xinput_send_report(uint8_t ep, struct usb_gamepad_report *repor
     struct xinput_in_report *xinput_report;
 
     xinput_report = (struct xinput_in_report *)gamepad_report_buffer;
-    memset(xinput_report, 0, sizeof(xinput_report));
+    memset(xinput_report, 0, sizeof(struct xinput_in_report));
     xinput_report->report_size = 20;
 
     if (report->buttons & USB_GAMEPAD_BUTTON_DU)
@@ -107,7 +105,7 @@ int usbd_gamepad_switch_send_report(uint8_t ep, struct usb_gamepad_report *repor
     struct switch_in_report *switch_report;
 
     switch_report = (struct switch_in_report *)gamepad_report_buffer;
-    memset(switch_report, 0, sizeof(switch_report));
+    memset(switch_report, 0, sizeof(struct switch_in_report));
 
     if (report->buttons & USB_GAMEPAD_BUTTON_S1)
         switch_report->buttons |= SWITCH_MASK_MINUS;
@@ -207,12 +205,5 @@ static const uint8_t hid_switch_report_desc[HID_SWITCH_REPORT_DESC_SIZE] = {
 
 struct usbd_interface *usbd_gamepad_switch_init_intf(struct usbd_interface *intf)
 {
-    intf->class_interface_handler = hid_class_interface_request_handler;
-    intf->class_endpoint_handler = NULL;
-    intf->vendor_handler = NULL;
-    intf->notify_handler = NULL;
-
-    intf->hid_report_descriptor = hid_switch_report_desc;
-    intf->hid_report_descriptor_len = HID_SWITCH_REPORT_DESC_SIZE;
-    return intf;
+    return usbd_hid_init_intf(0, intf, hid_switch_report_desc, HID_SWITCH_REPORT_DESC_SIZE);
 }

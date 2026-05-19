@@ -10,7 +10,7 @@ if RT_USING_CHERRYUSB
         default n
 
     if RT_CHERRYUSB_DEVICE
-        choice
+        choice CHERRYUSB_DEVICE_SPEED
             prompt "Select usb device speed"
             default RT_CHERRYUSB_DEVICE_SPEED_FS
             config RT_CHERRYUSB_DEVICE_SPEED_FS
@@ -21,7 +21,7 @@ if RT_USING_CHERRYUSB
                 bool "AUTO"
         endchoice
 
-        choice
+        choice CHERRYUSB_DEVICE_IP
             prompt "Select usb device ip, and some ip need config in usb_config.h, please check"
             default RT_CHERRYUSB_DEVICE_CUSTOM
             config RT_CHERRYUSB_DEVICE_CUSTOM
@@ -36,6 +36,8 @@ if RT_USING_CHERRYUSB
                 bool "dwc2_esp"
             config RT_CHERRYUSB_DEVICE_DWC2_KENDRYTE
                 bool "dwc2_kendryte"
+            config RT_CHERRYUSB_DEVICE_DWC2_INFINEON
+                bool "dwc2_infineon"
             config RT_CHERRYUSB_DEVICE_DWC2_AT
                 bool "dwc2_at"
             config RT_CHERRYUSB_DEVICE_DWC2_HC
@@ -74,6 +76,8 @@ if RT_USING_CHERRYUSB
                 bool "aic"
             config RT_CHERRYUSB_DEVICE_RP2040
                 bool "rp2040"
+            config RT_CHERRYUSB_DEVICE_RENESAS
+                bool "renesas"
             config RT_CHERRYUSB_DEVICE_CH32
                 bool "ch32"
             config RT_CHERRYUSB_DEVICE_PUSB2
@@ -137,10 +141,25 @@ if RT_USING_CHERRYUSB
             prompt "Enable usb dfu device"
             default n
 
+        config RT_CHERRYUSB_DEVICE_DISPLAY
+            bool
+            prompt "Enable usb display device"
+            default n
+
         config RT_CHERRYUSB_DEVICE_CDC_ACM_CHARDEV
             bool
             prompt "Enable chardev for cdc acm device"
             default n
+
+        config RT_CHERRYUSB_DEVICE_MSC_BLKDEV
+            bool
+            prompt "Enable blkdev for msc device"
+            default n
+
+        config CONFIG_USBDEV_MSC_BLOCK_DEV_NAME
+            string "usb device msc block device name"
+            depends on RT_CHERRYUSB_DEVICE_MSC_BLKDEV
+            default "sd0"
 
         config CONFIG_USBDEV_REQUEST_BUFFER_LEN
             int
@@ -165,7 +184,7 @@ if RT_USING_CHERRYUSB
             prompt "Enable usb cdc ecm device with lwip for lan"
             default n
 
-        choice
+        choice CHERRYUSB_DEVICE_TEMPLATE
             prompt "Select usb device template, please select class driver first"
             default RT_CHERRYUSB_DEVICE_TEMPLATE_NONE
             config RT_CHERRYUSB_DEVICE_TEMPLATE_NONE
@@ -182,7 +201,7 @@ if RT_USING_CHERRYUSB
             config RT_CHERRYUSB_DEVICE_TEMPLATE_MSC_BLKDEV
                 bool
                 prompt "msc_blkdev"
-                depends on RT_CHERRYUSB_DEVICE_MSC
+                depends on RT_CHERRYUSB_DEVICE_MSC && RT_CHERRYUSB_DEVICE_MSC_BLKDEV
             config RT_CHERRYUSB_DEVICE_TEMPLATE_HID_KEYBOARD
                 bool
                 prompt "hid_keyboard"
@@ -219,6 +238,10 @@ if RT_USING_CHERRYUSB
                 bool
                 prompt "cdc_ncm"
                 depends on RT_CHERRYUSB_DEVICE_CDC_NCM
+            config RT_CHERRYUSB_DEVICE_TEMPLATE_DFU
+                bool
+                prompt "dfu"
+                depends on RT_CHERRYUSB_DEVICE_DFU
             config RT_CHERRYUSB_DEVICE_TEMPLATE_CDC_ACM_MSC
                 bool
                 prompt "cdc_acm_msc"
@@ -241,6 +264,10 @@ if RT_USING_CHERRYUSB
                 bool
                 prompt "webusb_hid"
                 depends on RT_CHERRYUSB_DEVICE_HID
+            config RT_CHERRYUSB_DEVICE_TEMPLATE_DISPLAY
+                bool
+                prompt "display"
+                depends on RT_CHERRYUSB_DEVICE_DISPLAY
             config RT_CHERRYUSB_DEVICE_TEMPLATE_ADB
                 bool
                 prompt "adb"
@@ -251,11 +278,6 @@ if RT_USING_CHERRYUSB
                 depends on RT_CHERRYUSB_DEVICE_CDC_ACM_CHARDEV
         endchoice
 
-        config CONFIG_USBDEV_MSC_BLOCK_DEV_NAME
-            string "usb device msc block device name"
-            depends on RT_CHERRYUSB_DEVICE_TEMPLATE_MSC_BLKDEV
-            default "sd0"
-
     endif
 
     menuconfig RT_CHERRYUSB_HOST
@@ -263,7 +285,7 @@ if RT_USING_CHERRYUSB
         default n
 
     if RT_CHERRYUSB_HOST
-        choice
+        choice CHERRYUSB_HOST_IP
             prompt "Select usb host ip, and some ip need config in usb_config.h, please check"
             default RT_CHERRYUSB_HOST_CUSTOM
             config RT_CHERRYUSB_HOST_CUSTOM
@@ -288,6 +310,10 @@ if RT_USING_CHERRYUSB
                 bool "dwc2_esp"
             config RT_CHERRYUSB_HOST_DWC2_KENDRYTE
                 bool "dwc2_kendryte"
+            config RT_CHERRYUSB_HOST_DWC2_INFINEON
+                bool "dwc2_infineon"
+            config RT_CHERRYUSB_HOST_DWC2_AT
+                bool "dwc2_at, f405 only"
             config RT_CHERRYUSB_HOST_DWC2_HC
                 bool "dwc2_hc"
             config RT_CHERRYUSB_HOST_DWC2_NATION
@@ -464,21 +490,26 @@ if RT_USING_CHERRYUSB
             default "/"
 
         menu "Select USB host template, please select class driver first"
-            config CONFIG_TEST_USBH_SERIAL
+            config RT_TEST_USBH_SERIAL
                 bool
-                prompt "demo for test serial, cannot enable this demo, we have used rt-device framework instead"
+                prompt "demo for test seial, cannot enable this demo, you can use rt-thread device api to test"
                 default n
-                depends on RT_CHERRYUSB_HOST_CDC_ACM || RT_CHERRYUSB_HOST_FTDI || RT_CHERRYUSB_HOST_CH34X || RT_CHERRYUSB_HOST_CP210X || RT_CHERRYUSB_HOST_PL2303
-            config CONFIG_TEST_USBH_HID
-                bool
+                depends on CONFIG_USBHOST_SERIAL
+            config RT_TEST_USBH_HID
+                int
                 prompt "demo for test hid"
-                default n
+                default 0
                 depends on RT_CHERRYUSB_HOST_HID
-            config CONFIG_TEST_USBH_MSC
+            config RT_TEST_USBH_MSC
                 bool
-                prompt "demo for test msc, cannot enable this demo, we have used dfs instead"
+                prompt "demo for test msc, cannot enable this demo, you can use rt-thread dfs api to test"
                 default n
                 depends on RT_CHERRYUSB_HOST_MSC
+            config RT_TEST_USBH_NET
+                bool
+                prompt "demo for test net, cannot enable this demo, you can use lwip api to test"
+                default n
+                depends on RT_CHERRYUSB_HOST_CDC_ECM || RT_CHERRYUSB_HOST_CDC_RNDIS || RT_CHERRYUSB_HOST_CDC_NCM || RT_CHERRYUSB_HOST_ASIX || RT_CHERRYUSB_HOST_RTL8152
         endmenu
     endif
 endif

@@ -36,6 +36,15 @@
 #define GET_USB_PHY_TARGET(reg_base)    ((reg_base) == (void*)ESP_USB_HS0_BASE ? USB_PHY_TARGET_UTMI : USB_PHY_TARGET_INT)
 #undef GET_USB_PHY_SPEED
 #define GET_USB_PHY_SPEED(reg_base)    ((reg_base) == (void*)ESP_USB_HS0_BASE ? USB_PHY_SPEED_HIGH : USB_PHY_SPEED_FULL)
+#elif CONFIG_IDF_TARGET_ESP32S31
+#define DEFAULT_CPU_FREQ_MHZ    CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ
+#define DEFAULT_USB_INTR_SOURCE ETS_USB_OTGHS_INTR_SOURCE
+#undef GET_USB_INTR_SOURCE
+#define GET_USB_INTR_SOURCE(reg_base)   DEFAULT_USB_INTR_SOURCE
+#undef GET_USB_PHY_TARGET
+#define GET_USB_PHY_TARGET(reg_base)    USB_PHY_TARGET_UTMI
+#undef GET_USB_PHY_SPEED
+#define GET_USB_PHY_SPEED(reg_base)     USB_PHY_SPEED_HIGH
 #else
 #define DEFAULT_CPU_FREQ_MHZ 160
 #endif
@@ -72,6 +81,35 @@ const struct dwc2_user_params param_fs = {
     .host_rx_fifo_size = 80,
     .host_nperio_tx_fifo_size = 60, // 240 byte
     .host_perio_tx_fifo_size = 60,  // 240 byte
+};
+#elif CONFIG_IDF_TARGET_ESP32S31
+const struct dwc2_user_params param_hs = {
+    .phy_type = DWC2_PHY_TYPE_PARAM_UTMI,
+    .device_dma_enable = true,
+    .device_dma_desc_enable = false,
+    .device_rx_fifo_size = (896 - 16 - 128 - 128 - 128 - 128 - 16 - 16),
+    .device_tx_fifo_size = {
+        [0] = 16,  // 64 byte
+        [1] = 128, // 512 byte
+        [2] = 128, // 512 byte
+        [3] = 128, // 512 byte
+        [4] = 128, // 512 byte
+        [5] = 16,  // 64 byte
+        [6] = 16,  // 64 byte
+        [7] = 0,
+        [8] = 0,
+        [9] = 0,
+        [10] = 0,
+        [11] = 0,
+        [12] = 0,
+        [13] = 0,
+        [14] = 0,
+        [15] = 0 },
+
+    .host_dma_desc_enable = false,
+    .host_rx_fifo_size = (896 - 128 - 128),
+    .host_nperio_tx_fifo_size = 128, // 512 byte
+    .host_perio_tx_fifo_size = 128,  // 512 byte
 };
 #elif CONFIG_IDF_TARGET_ESP32P4
 const struct dwc2_user_params param_fs = {
@@ -151,7 +189,7 @@ void usb_dc_low_level_init(uint8_t busid)
     };
     phy_config.target = GET_USB_PHY_TARGET(reg_base);
     phy_config.otg_speed = GET_USB_PHY_SPEED(reg_base);
-    
+
     ret = usb_new_phy(&phy_config, &s_phy_handle[GET_USB_INDEX(reg_base)]);
     if (ret != ESP_OK) {
         USB_LOG_ERR("USB Phy Init Failed!\r\n");
@@ -243,6 +281,8 @@ void dwc2_get_user_params(uint32_t reg_base, struct dwc2_user_params *params)
     } else {
         memcpy(params, &param_fs, sizeof(struct dwc2_user_params));
     }
+#elif CONFIG_IDF_TARGET_ESP32S31
+    memcpy(params, &param_hs, sizeof(struct dwc2_user_params));
 #endif
 #ifdef CONFIG_USB_DWC2_CUSTOM_FIFO
     struct usb_dwc2_user_fifo_config s_dwc2_fifo_config;
@@ -260,6 +300,11 @@ void dwc2_get_user_params(uint32_t reg_base, struct dwc2_user_params *params)
 void usbd_dwc2_delay_ms(uint8_t ms)
 {
     vTaskDelay(pdMS_TO_TICKS(ms));
+}
+
+uint32_t usbd_dwc2_get_system_clock(void)
+{
+    return SystemCoreClock;
 }
 
 #ifdef CONFIG_USB_DCACHE_ENABLE
